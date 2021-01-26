@@ -1,5 +1,5 @@
 name: Tcl
-on: [push]
+on: push
 
 jobs:
   build:
@@ -47,6 +47,12 @@ jobs:
 
 ##### create release (on tag) ##################################################
 
+      - name: read build.log
+        id: build_log
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ${{ env.WRK_DIR }}/build.log
+
       - name: create release
         id: release
         uses: actions/create-release@v1
@@ -58,6 +64,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: true
           prerelease: false
+          body: ${{ steps.build_log.outputs.content }}
 
       - name: upload release asset Tcl.framework
         uses: actions/upload-release-asset@v1
