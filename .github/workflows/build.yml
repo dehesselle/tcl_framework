@@ -1,3 +1,6 @@
+# This file is part of https://github.com/dehesselle/tcl_framework
+# SPDX-License-Identifier: MIT
+
 name: Tcl
 on: push
 
@@ -6,25 +9,28 @@ jobs:
     runs-on: macos-10.15
     env:
       WRK_DIR: /Users/Shared/work
-      PATH: /Users/Shared/work/bin:/usr/bin:/bin:/usr/sbin:/sbin
+      PATH: /usr/bin:/bin:/usr/sbin:/sbin
     steps:
+
+##### preparations #############################################################
 
       - name: checkout repository
         uses: actions/checkout@v2
 
-      # GitHub does not provide the 10.11 SDK (from Xcode 7.3.1). There is no
-      # official public download available from Apple and I don't trust 3rd
-      # party sources (e.g. "phracker"), so I'm using my own source.
+      # GitHub does not provide old SDKs like 10.11 (from Xcode 7.3.1). There is
+      # no official public download available from Apple and I don't trust 3rd
+      # party sources (e.g. "phracker"), so I'm enabling this job to download
+      # a compressed tarball that contains the SDK.
       # In order to use this, you need to setup a repository secret named
-      # SDK1011_DOWNLOAD_URL and give a URL to an archive containing the SDK.
-      - name: install MacOSX10.11.sdk
+      # SDK_DOWNLOAD_URL and give a link to a .tar.xz file.
+      - name: install macOS SDK
         env:
-          SDK1011_DOWNLOAD_URL: ${{ secrets.SDK1011_DOWNLOAD_URL }}
-        if: env.SDK1011_DOWNLOAD_URL != null
+          SDK_DOWNLOAD_URL: ${{ secrets.SDK_DOWNLOAD_URL }}
+        if: env.SDK_DOWNLOAD_URL != null
         run:  |
               mkdir -p $WRK_DIR
-              curl -L ${{ secrets.SDK1011_DOWNLOAD_URL }} | tar -C $WRK_DIR -xJp
-              echo "SDKROOT=$WRK_DIR/$(basename ${SDK1011_DOWNLOAD_URL%%.tar.xz*})" >> $GITHUB_ENV
+              curl -L ${{ secrets.SDK_DOWNLOAD_URL }} | tar -C $WRK_DIR -xJp
+              echo "SDKROOT=$WRK_DIR/$(basename ${SDK_DOWNLOAD_URL%%.tar.xz*})" >> $GITHUB_ENV
 
 ##### build ####################################################################
 

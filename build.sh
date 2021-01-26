@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# This file is part of https://github.com/dehesselle/tcl_framework
+# SPDX-License-Identifier: MIT
+
 ### Tcl version ################################################################
 
 TCL_VER_MAJOR=8
@@ -14,6 +17,8 @@ TCL_URL=https://prdownloads.sourceforge.net/tcl/tcl$TCL_VER_FULL-src.tar.gz
 if [ -z $WRK_DIR ]; then
   WRK_DIR=$(mktemp -d /Users/Shared/work/tcl.XXXXXX)
 fi
+
+mkdir -p $WRK_DIR
 
 ### path #######################################################################
 
@@ -34,15 +39,11 @@ export MACOSX_DEPLOYMENT_TARGET=$(/usr/libexec/PlistBuddy \
 ### build ######################################################################
 
 LOG=$WRK_DIR/build.log
-
-mkdir -p $WRK_DIR
-cd $WRK_DIR
-
 echo "SDKROOT=$SDKROOT" >> $LOG
 echo "MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET" >> $LOG
 
-curl -L $TCL_URL | tar xz
-cd tcl*/unix
+curl -L $TCL_URL | tar -C $WRK_DIR -xz
+cd $WRK_DIR/tcl*/unix
 
 ./configure --prefix=$WRK_DIR --enable-64bit --enable-framework
 make -j$(sysctl -n hw.ncpu)
