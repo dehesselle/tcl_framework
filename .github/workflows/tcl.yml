@@ -1,0 +1,82 @@
+name: Tcl
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-10.15
+    env:
+      WRK_DIR: /Users/Shared/work
+      PATH: /Users/Shared/work/bin:/usr/bin:/bin:/usr/sbin:/sbin
+    steps:
+
+      - name: checkout repository
+        uses: actions/checkout@v2
+
+      # GitHub does not provide the 10.11 SDK (from Xcode 7.3.1). There is no
+      # official public download available from Apple and I don't trust 3rd
+      # party sources (e.g. "phracker"), so I'm using my own source.
+      # In order to use this, you need to setup a repository secret named
+      # SDK1011_DOWNLOAD_URL and give a URL to an archive containing the SDK.
+      - name: install MacOSX10.11.sdk
+        env:
+          SDK1011_DOWNLOAD_URL: ${{ secrets.SDK1011_DOWNLOAD_URL }}
+        if: env.SDK1011_DOWNLOAD_URL != null
+        run:  |
+              mkdir -p $WRK_DIR
+              curl -L ${{ secrets.SDK1011_DOWNLOAD_URL }} | tar -C $WRK_DIR -xJp
+              echo "SDKROOT=$WRK_DIR/$(basename ${SDK1011_DOWNLOAD_URL%%.tar.xz*})" >> $GITHUB_ENV
+
+##### build ####################################################################
+
+      - name: build Tcl
+        run: ./build.sh
+
+##### create artifact ##########################################################
+
+      - name: create artifact Tcl.framework
+        uses: actions/upload-artifact@v2
+        with:
+          name: Tcl.framework
+          path: ${{ env.WRK_DIR }}/Tcl.framework.tar.bz2
+
+      - name: create artifact Tcl
+        uses: actions/upload-artifact@v2
+        with:
+          name: Tcl library files
+          path: ${{ env.WRK_DIR }}/Tcl.tar.bz2
+
+##### create release (on tag) ##################################################
+
+      - name: create release
+        id: release
+        uses: actions/create-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
+
+      - name: upload release asset Tcl.framework
+        uses: actions/upload-release-asset@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ${{ env.WRK_DIR }}/Tcl.framework.tar.bz2
+          asset_name: Tcl.framework.tar.bz2
+          asset_content_type: application/x-gtar
+
+      - name: upload release asset Tcl library files
+        uses: actions/upload-release-asset@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ${{ env.WRK_DIR }}/Tcl.tar.bz2
+          asset_name: Tcl.tar.bz2
+          asset_content_type: application/x-gtar
