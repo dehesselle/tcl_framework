@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-WRK_DIR=$(mktemp -d /Users/Shared/work/tcl.XXXXXXX)
+TCL_VER_MAJOR=8
+TCL_VER_MINOR=6
+TCL_VER_PATCH=11
+TCL_VER=$TCL_VER_MAJOR.$TCL_VER_MINOR
+TCL_VER_FULL=$TCL_VER.$TCL_VER_PATCH
+TCL_URL=https://prdownloads.sourceforge.net/tcl/tcl$TCL_VER_FULL-src.tar.gz
+
+#########
+
+WRK_DIR=$(mktemp -d /Users/Shared/work/tcl.XXXXXX)
 
 SDKROOT=/opt/sdks/MacOSX10.11.sdk
 
@@ -14,13 +23,11 @@ export MACOSX_DEPLOYMENT_TARGET=$(/usr/libexec/PlistBuddy -c 'Print :DefaultProp
 ##########
 
 cd $WRK_DIR
-curl -L https://prdownloads.sourceforge.net/tcl/tcl8.6.11-src.tar.gz | tar xz
-cd tcl*/macosx
-./configure --prefix=$WRK_DIR --enable-64bit --enable-framework --libdir=$WRK_DIR/Library/Frameworks
+curl -L $TCL_URL | tar xz
+cd tcl*/unix
+./configure --prefix=$WRK_DIR --enable-64bit --enable-framework
 make -j$(sysctl -n hw.ncpu)
-install_name_tool -change /Library/Frameworks/Tcl.framework/Versions/8.6/Tcl $WRK_DIR/Library/Frameworks/Tcl.framework/Versions/8.6/Tcl $WRK_DIR/build/tcl/tclsh8.6
+install_name_tool -change /Library/Frameworks/Tcl.framework/Versions/$TCL_VER/Tcl @executable_path/Tcl tclsh
+make install DESTDIR=$WRK_DIR NATIVE_TCLSH=$(pwd)/tclsh
 
-make install DESTDIR=$WRK_DIR NATIVE_TCLSH=$WRK_DIR/build/tcl/tclsh8.6
-
-cp $WRK_DIR/build/tcl/tclsh8.6 $WRK_DIR/Library/Frameworks/Tcl.framework/Versions/8.6
-install_name_tool -change $WRK_DIR/Library/Frameworks/Tcl.framework/Versions/8.6/Tcl @executable_path/Tcl $WRK_DIR/Library/Frameworks/Tcl.framework/Versions/8.6/tclsh8.6
+cp tclsh $WRK_DIR/Library/Frameworks/Tcl.framework/Versions/$TCL_VER/tclsh$TCL_VER
