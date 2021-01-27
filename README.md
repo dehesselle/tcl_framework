@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Build Tcl as framework for macOS.
+Build [Tcl](https://www.tcl.tk) as framework for macOS.
 
 ## Building
 
@@ -16,4 +16,6 @@ See the releases page.
 
 ## License
 
-[MIT](LICENSE)
+This work is licensed under [MIT](LICENSE).
+
+[Tcl](https://www.tcl.tk) is licensed under [Tcl/Tk License Terms](https://www.tcl.tk/software/tcltk/license.html).
