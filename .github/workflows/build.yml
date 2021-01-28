@@ -1,11 +1,11 @@
 # This file is part of https://github.com/dehesselle/tcl_framework
 # SPDX-License-Identifier: MIT
 
-name: Tcl
+name: build
 on: push
 
 jobs:
-  build:
+  tcltk:
     runs-on: macos-10.15
     env:
       WRK_DIR: /Users/Shared/work
@@ -35,7 +35,10 @@ jobs:
 ##### build ####################################################################
 
       - name: build Tcl
-        run: ./build.sh
+        run: ./1-build_tcl.sh
+
+      - name: build Tk
+        run: ./2-build_tk.sh
 
 ##### create artifact ##########################################################
 
@@ -51,13 +54,23 @@ jobs:
           name: Tcl library files
           path: ${{ env.WRK_DIR }}/Tcl.tar.bz2
 
+      - name: create artifact Tk.framework
+        uses: actions/upload-artifact@v2
+        with:
+          name: Tk.framework
+          path: ${{ env.WRK_DIR }}/Tk.framework.tar.bz2
+
 ##### create release (on tag) ##################################################
+
+      - name: get tk subdir
+        id: tk_dir
+        run: echo "::set-output name=path::$(echo $WRK_DIR/tk.*)"
 
       - name: read build.log
         id: build_log
         uses: juliangruber/read-file-action@v1
         with:
-          path: ${{ env.WRK_DIR }}/build.log
+          path: ${{ steps.tk_dir.outputs.path }}/build.log
 
       - name: create release
         id: release
@@ -92,4 +105,15 @@ jobs:
           upload_url: ${{ steps.release.outputs.upload_url }}
           asset_path: ${{ env.WRK_DIR }}/Tcl.tar.bz2
           asset_name: Tcl.tar.bz2
+          asset_content_type: application/x-gtar
+
+      - name: upload release asset Tk.framework
+        uses: actions/upload-release-asset@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ${{ env.WRK_DIR }}/Tk.framework.tar.bz2
+          asset_name: Tk.framework.tar.bz2
           asset_content_type: application/x-gtar
